@@ -1,0 +1,50 @@
+---
+format_version: 1.1.0
+default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
+app:
+  envs:
+  - default_apk_dir: "./app/build/outputs/apk"
+  - default_apk_name: app-debug.apk
+trigger_map:
+- pattern: "*"
+  is_pull_request_allowed: true
+  workflow: primary
+workflows:
+  primary:
+    steps:
+    - git-clone:
+        run_if: .IsCI
+    - script:
+        title: Re-install SDK (test)
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            set -x
+            echo y | android update sdk --no-ui --all --filter android-21,build-tools-21.0.1
+    - script:
+        title: gradlew
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            set -x
+
+            # bash ./gradlew assemble --info
+            # bash ./gradlew assemble --debug
+            # bash ./gradlew assemble --info --stacktrace
+            bash ./gradlew assemble --stacktrace
+    - script:
+        title: gradle assemble & move to DEPLOY dir
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            set -x
+
+            gradle assemble
+            mv "${default_apk_dir}/${default_apk_name}" "${BITRISE_DEPLOY_DIR}/${default_apk_name}"
+    - deploy-to-bitrise-io:
+        run_if: .IsCI
+        inputs:
+        - is_compress: 'false'

@@ -1,0 +1,9 @@
+app:
+  image: bitriseio/docker-android:latest
+  command: bitrise --version
+  volumes:
+    - .:/bitrise/test-app
+  working_dir: /bitrise/test-app
+  environment:
+    CI: false
+    BITRISE_SOURCE_DIR: /bitrise/test-app
